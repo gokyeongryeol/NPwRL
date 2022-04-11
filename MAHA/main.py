@@ -7,7 +7,8 @@ parser = argparse.ArgumentParser(description="1D regression with Neural Processe
     
 parser.add_argument("--gpu_ids", default=0, type=int, help="assigned gpu ids")
 parser.add_argument("--data", default='mixture', type=str, help="task generating function")
-parser.add_argument("--model", default='NP', type=str, help="Name of Neural Processes variant")
+parser.add_argument("--model", default='NP', type=str, help="name of Neural Processes variant: NP, ANP, mulNP, MAHA")
+parser.add_argument("--phase", default='pretrain', type=str, help="whether to pretrain or finetune in case of MAHA")
 
 parser.add_argument("--n_epochs", default=100, type=int, help="number of epochs")
 parser.add_argument("--batch_size", default=100, type=int, help="batch size")
@@ -31,6 +32,7 @@ os.makedirs('config', exist_ok=True)
 os.makedirs('model', exist_ok=True)
 os.makedirs('MSE', exist_ok=True)
 os.makedirs('loss', exist_ok=True)
+os.makedirs('plot', exist_ok=True)
 os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu_ids)
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 
-from algo import NP
+from algo import NP, MAHA
 
 
 def evaluation(model, data_que): 
@@ -20,8 +20,14 @@ def train_model(args):
     valid_data_que = torch.load(f'data/{args.data}_True_True.pt')
     
     #set model
-    model = NP(args.x_dim, args.hid_dim, args.r_dim, args.z_dim, args.y_dim, args.model,
-               args.lr, args.clipping)
+    if 'NP' in args.model:
+        model = NP(args.x_dim, args.hid_dim, args.r_dim, args.z_dim, args.y_dim, args.model,
+                   args.lr, args.clipping)
+    else:
+        model = MAHA(args.x_dim, args.hid_dim, args.r_dim, args.z_dim, args.y_dim, args.phase,
+                     args.lr, args.clipping)
+        if args.phase == 'finetune':
+            model.load_state_dict(torch.load(f'model/{args.data}_{args.model}_pretrain_model.pt'))
     model = model.cuda()
 
     MSE_list = []
@@ -39,9 +45,9 @@ def train_model(args):
                     MSE_list.append(MSE)
 
                 print('Epoch: {} \t Index: {} \t MSE : {}'.format(epoch, index, MSE))
-                torch.save(model.state_dict(), f'model/{args.data}_{args.model}_model.pt')
-                torch.save(model.loss, f'loss/{args.data}_{args.model}_loss.pt')
-                torch.save(MSE_list, f'MSE/{args.data}_{args.model}_MSE.pt')
+                torch.save(model.state_dict(), f'model/{args.data}_{args.model}_{args.phase}_model.pt')
+                torch.save(model.loss, f'loss/{args.data}_{args.model}_{args.phase}_loss.pt')
+                torch.save(MSE_list, f'MSE/{args.data}_{args.model}_{args.phase}_MSE.pt')
             
 def test_model(args):
     #set data
@@ -55,8 +61,14 @@ def test_model(args):
     Tx, Ty = Tx.squeeze().cpu(), Ty.squeeze().cpu()
         
     #set model
+    if 'NP' in args.model:
+        model = NP(args.x_dim, args.hid_dim, args.r_dim, args.z_dim, args.y_dim, args.model,
+                   args.lr, args.clipping)
+    else:
+        model = MAHA(args.x_dim, args.hid_dim, args.r_dim, args.z_dim, args.y_dim, args.phase,
+                     args.lr, args.clipping)
     model = NP(args.x_dim, args.hid_dim, args.r_dim, args.z_dim, args.y_dim, args.model)
-    model.load_state_dict(torch.load(f'model/{args.data}_{args.model}_model.pt'))
+    model.load_state_dict(torch.load(f'model/{args.data}_{args.model}_{args.phase}_model.pt'))
     model = model.cuda()
     model.eval()
 
@@ -76,6 +88,6 @@ def test_model(args):
              alpha=.5, fc='b', ec='None', label='95% confidence interval')
     plt.xlabel('$x$')
     plt.ylabel('$f(x)$')
-    plt.savefig(f'plot/{args.data}_{args.model}_regression.png')
+    plt.savefig(f'plot/{args.data}_{args.model}_{args.phase}_regression.png')
     plt.legend(loc='lower right')
     plt.close()
